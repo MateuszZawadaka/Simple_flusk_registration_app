@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twoje rezerwacje</title>
+</head>
+<body>
+    <h1>Twoje rezerwacje</h1>
+
+    {% if reservations %}
+        <ul>
+        {% for reservation in reservations %}
+            <li>{{ reservation[2] }} - {{ reservation[3] }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nie masz żadnych rezerwacji.</p>
+    {% endif %}
+
+    <br>
+    <a href="/">Powrót do strony głównej</a>
+</body>
+</html>

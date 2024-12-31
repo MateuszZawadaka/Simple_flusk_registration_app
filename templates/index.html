@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rezerwacja</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Rezerwacja terminu</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li class="alert alert-{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <form action="/reserve" method="POST">
+        <label for="date">Wybierz datę:</label>
+        <input type="date" id="date" name="date" required><br><br>
+
+        <label for="time">Wybierz godzinę:</label>
+        <select id="time" name="time" required>
+            {% set available_times = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'] %}
+            {% for time in available_times %}
+                {% set is_reserved = false %}
+                {% for reservation in reservations %}
+                    {% if reservation.reservation_date == selected_date and reservation.reservation_time == time %}
+                        {% set is_reserved = true %}
+                    {% endif %}
+                {% endfor %}
+                {% if is_reserved %}
+                    <option value="{{ time }}" style="text-decoration: line-through;" disabled>{{ time }}</option>
+                {% else %}
+                    <option value="{{ time }}">{{ time }}</option>
+                {% endif %}
+            {% endfor %}
+        </select><br><br>
+
+        <button type="submit">Zarezerwuj</button>
+    </form>
+
+    <a href="/">Powrót do strony głównej</a>
+</body>
+</html>
