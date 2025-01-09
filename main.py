@@ -5,14 +5,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Klucz sesji (zmień na bezpieczny!)
+app.secret_key = 'your_secret_key'  
 
-# Dane do autoryzacji Twilio
 TWILIO_ACCOUNT_SID = 'your_account_sid'
 TWILIO_AUTH_TOKEN = 'your_auth_token'
-TWILIO_PHONE_NUMBER = 'your_twilio_phone_number'  # Numer Twilio, z którego będziesz wysyłać SMS-y
+TWILIO_PHONE_NUMBER = 'your_twilio_phone_number'  
 
-# Funkcja do wysyłania SMS-a
 def send_sms_confirmation(user_phone_number, reservation_date, reservation_time):
     client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
     message = f"""
@@ -21,7 +19,6 @@ def send_sms_confirmation(user_phone_number, reservation_date, reservation_time)
     """
 
     try:
-        # Wysłanie SMS-a
         client.messages.create(
             body=message,
             from_=TWILIO_PHONE_NUMBER,
@@ -31,7 +28,6 @@ def send_sms_confirmation(user_phone_number, reservation_date, reservation_time)
     except Exception as e:
         print(f"Nie udało się wysłać SMS-a. Błąd: {e}")
 
-# Funkcja do inicjalizacji bazy danych
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'users.db')
 
@@ -39,7 +35,6 @@ def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
 
-        # Tworzenie tabeli użytkowników, jeśli nie istnieje
         cursor.execute(''' 
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +45,6 @@ def init_db():
             )
         ''')
 
-        # Tworzenie tabeli rezerwacji, jeśli nie istnieje
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS reservations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,12 +67,12 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        phone_number = request.form['phone_number']  # Pobranie numeru telefonu z formularza
+        phone_number = request.form['phone_number']  
 
-        # Hashowanie hasła
+        
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
-        # Dodanie użytkownika do bazy
+        
         try:
             with sqlite3.connect(DB_PATH) as conn: 
                 cursor = conn.cursor()
@@ -99,7 +93,6 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        # Sprawdzenie czy użytkownik istnieje w bazie danych
         with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
@@ -110,7 +103,6 @@ def login():
             elif not check_password_hash(user[2], password):
                 flash('Nieprawidłowe hasło.', 'danger')
             else:
-                # Użytkownik zalogowany pomyślnie
                 session['user_id'] = user[0]
                 session['username'] = user[1]
                 flash('Zalogowano pomyślnie!', 'success')
@@ -124,7 +116,7 @@ def index():
         flash('Musisz być zalogowany, aby zobaczyć tę stronę.', 'warning')
         return redirect('/login')
 
-    selected_date = request.args.get('date')  # Opcjonalnie: wybór daty
+    selected_date = request.args.get('date')  
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM reservations')
@@ -132,19 +124,16 @@ def index():
 
     return render_template('reservations.html', username=session['username'], reservations=reservations)
 
-# Rezerwacja
 @app.route('/reserve', methods=['POST'])
 def reserve():
     if 'user_id' not in session:
         flash('Musisz być zalogowany, aby dokonać rezerwacji.', 'warning')
         return redirect('/login')
 
-    # Pobranie danych z formularza
     date = request.form['date']
     time = request.form['time']
     username = session['username']
 
-    # Sprawdzanie, czy dany termin jest już zajęty
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute('''
@@ -157,7 +146,6 @@ def reserve():
             flash('Ten termin jest już zajęty. Wybierz inny.', 'danger')
             return redirect('/')
 
-        # Jeśli termin jest wolny, zapisujemy rezerwację
         cursor.execute('''
             INSERT INTO reservations (user_id, reservation_date, reservation_time) 
             VALUES (?, ?, ?)
@@ -171,7 +159,6 @@ def reserve():
 
 
 
-# Wylogowanie
 @app.route('/logout')
 def logout():
     session.clear()
@@ -179,5 +166,5 @@ def logout():
     return redirect('/login')
 
 if __name__ == '__main__':
-    init_db()  # Inicjalizacja bazy danych
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    init_db()  
+    app.run(host='0.0.0.0', port=8080, debug=True)
